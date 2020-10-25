@@ -1,6 +1,6 @@
 <template>
   <div>
-    用户信息
+    短信信息
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    用户信息
+    滚动图片
   </div>
 </template>
 

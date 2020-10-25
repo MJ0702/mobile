@@ -1,6 +1,6 @@
 <template>
   <div>
-    用户信息
+    用户地址信息
   </div>
 </template>
 
