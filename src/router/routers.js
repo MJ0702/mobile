@@ -158,7 +158,7 @@ export default [
         path: 'short_info',
         name: 'short_info',
         meta: {
-          icon: 'ios-bug',
+          icon: 'md-chatboxes',
           title: '短信信息'
         },
         component: () => import('@/view/message/short-info.vue')
@@ -178,7 +178,7 @@ export default [
         path: 'company_info',
         name: 'company_info',
         meta: {
-          icon: 'ios-navigate',
+          icon: 'ios-copy',
           title: '公司信息'
         },
         component: () => import('@/view/configuration/company-info.vue')
@@ -187,7 +187,7 @@ export default [
         path: 'company_addr_info',
         name: 'company_addr_info',
         meta: {
-          icon: 'ios-navigate',
+          icon: 'ios-pin-outline',
           title: '公司地址信息'
         },
         component: () => import('@/view/configuration/company-addr-info.vue')
@@ -196,7 +196,7 @@ export default [
         path: 'scroll_pic',
         name: 'scroll_pic',
         meta: {
-          icon: 'ios-navigate',
+          icon: 'ios-image',
           title: '滚动图片'
         },
         component: () => import('@/view/configuration/scroll-pic.vue')
