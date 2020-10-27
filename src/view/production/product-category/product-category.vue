@@ -21,7 +21,8 @@
         </Col>
       </Row>
     </Form>
-    <Button type="primary" style="margin-bottom: 5px;" @click="handleAdd">添加</Button>
+    <Button type="primary" style="margin-bottom: 5px;" @click="showModel()">添加</Button>
+    <addProductModel :addTitle='addTitle' :showModal='addProductModal' @updateModelStatus='updateModelStatus'></addProductModel>
     <Table :data="tableData1" :columns="tableColumns1" stripe></Table>
     <div :style="{ margin: '10px', overflow: 'hidden', display: isShow }">
       <div style="float: right">
@@ -31,7 +32,11 @@
   </div>
 </template>
 <script>
+import addProductModel from '../product-add.vue'
 export default {
+  components: {
+    addProductModel
+  },
   data () {
     return {
       isShow: 'block',
@@ -39,6 +44,8 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      addProductModal: false,
+      addTitle: '',
       formValidate: {
         name: '',
         status: ''
@@ -203,17 +210,15 @@ export default {
       }
     },
     // 添加
-    handleAdd () {
-      this.tableData1.unshift({
-        ID: 99999999999,
-        name: 888888888888,
-        pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-        remark: 3333333333333,
-        status: Math.floor(Math.random() * 2 + 1),
-        update: new Date()
-      })
-      // this.changePage(1)
-      this.isShow = 'block'
+    showModel () {
+      this.addProductModal = true
+      // console.log(this.addProductModal)
+      this.addTitle = '新增产品类型'
+      // console.log(this.addTitle)
+    },
+    updateModelStatus (newVal) {
+      this.addProductModal = newVal
+      // console.log(this.addProductModal)
     },
     formatDate (date) {
       // 格式化时间
@@ -225,11 +230,6 @@ export default {
       return y + '-' + m + '-' + d
     },
     changePage (index) { // 分页
-      // 加载中遮罩
-      this.$Spin.show()
-      setTimeout(() => {
-        this.$Spin.hide()
-      }, 300)
       // 需要显示开始数据的index,(因为数据是从0开始的，页码是从1开始的，需要-1)
       let _start = (index - 1) * this.pageSize
       // 需要显示结束数据的index

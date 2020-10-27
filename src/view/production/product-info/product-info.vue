@@ -225,11 +225,6 @@ export default {
       return y + '-' + m + '-' + d
     },
     changePage (index) { // 分页
-      // 加载中遮罩
-      this.$Spin.show()
-      setTimeout(() => {
-        this.$Spin.hide()
-      }, 300)
       // 需要显示开始数据的index,(因为数据是从0开始的，页码是从1开始的，需要-1)
       let _start = (index - 1) * this.pageSize
       // 需要显示结束数据的index
