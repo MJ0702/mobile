@@ -10,8 +10,7 @@
         <Col span="6" class="col_box_right">
           <FormItem label="状态" prop="status">
             <Select v-model="formValidate.status" placeholder="请选择状态">
-              <Option value="0">禁用</Option>
-              <Option value="1">启用</Option>
+              <Option v-for="item in selList" :key="item.value" :value="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
         </Col>
@@ -57,6 +56,18 @@ export default {
         status: '',
         update: new Date()
       },
+      // 搜索状态栏下拉数据
+      selList: [
+        {
+          value: '0',
+          label: '禁用'
+        },
+        {
+          value: '1',
+          label: '启用'
+        }
+      ],
+      // 搜索表单数据
       formValidate: {
         name: '',
         status: ''
@@ -102,7 +113,7 @@ export default {
           key: 'status',
           render: (h, params) => {
             const row = params.row
-            const text = row.status === 1 ? '禁用' : '启用'
+            const text = row.status === 1 ? '启用' : '禁用'
             return h('Tag', {}, text)
           }
         },
@@ -179,8 +190,8 @@ export default {
           ID: Math.floor(Math.random() * 100000 + 1),
           name: Math.floor(Math.random() * 100000 + 1),
           pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-          remark: Math.floor(Math.random() * 3 + 1),
-          status: Math.floor(Math.random() * 2 + 1),
+          remark: Math.floor(Math.random() * 1000 + 1),
+          status: Math.floor(Math.random() * 2),
           update: new Date()
         })
       }
@@ -239,12 +250,10 @@ export default {
         this.content.status = this.tableData1[index].status
         this.content.update = this.tableData1[index].update
       }
-      // console.log(this.addTitle)
     },
     // 添加modal给父组件传值false,关闭modal
     updateModelStatus (newVal) {
       this.content.addProductModal = newVal
-      // console.log(this.addProductModal)
     },
     formatDate (date) {
       // 格式化时间
@@ -267,17 +276,6 @@ export default {
       // 储存当前页
       this.pageCurrent = index
     },
-    // show (index) { // 编辑
-    //   this.$Modal.info({
-    //     title: 'User Info',
-    //     content: `ID：${this.tableData1[index].ID}<br>
-    //               name：${this.tableData1[index].name}<br>
-    //               pic：<img class="edit_pic" src=${this.tableData1[index].pic}><br>
-    //               remark：${this.tableData1[index].remark}<br>
-    //               status：${this.tableData1[index].status}<br>
-    //               update：${this.formatDate(this.tableData1[index].update)}`
-    //   })
-    // },
     remove (index) { // 删除
       this.$Modal.confirm({
         title: '删除提示',

@@ -7,32 +7,33 @@
       @on-ok="ok"
       @on-cancel="cancel"
     >
-      <Form ref="formValidateAdd" :model="formValidateAdd" :label-width="40" class="form">
+      <Form ref="formValidateAdd" :model="formValidateAdd" :label-width="40" class="top">
         <Row>
-          <Col span="11" class="col_box_right">
+          <Col span="22">
             <FormItem label="名称" prop="name">
               <Input v-model="formValidateAdd.name" placeholder="请输入名称"></Input>
             </FormItem>
           </Col>
-          <Col span="11">
+          <Col span="22">
             <FormItem label="状态" prop="status">
-              <Select :label="select_label" v-model="formValidateAdd.status" placeholder="请选择状态">
-                <Option value="0">禁用</Option>
-                <Option value="1">启用</Option>
+              <Select v-model="formValidateAdd.status" placeholder="请选择状态">
+                <Option v-for="item in selList" :key="item.value" :value="item.value">{{ item.label }}</Option>
               </Select>
             </FormItem>
           </Col>
-          <Col span="19" class="col_box_right">
+          <Col span="22">
             <FormItem label="图片" prop="pic">
               <Input v-model="formValidateAdd.pic" disabled placeholder="请上传图片"></Input>
             </FormItem>
           </Col>
-          <Col span="2" class="col_box_left">
-            <Button type="primary" shape="circle" icon="ios-search">上传</Button>
+          <Col span="22" class="img-left">
+          <Upload action="//jsonplaceholder.typicode.com/posts/">
+            <Button icon="ios-cloud-upload-outline" type="primary">上传</Button>
+          </Upload>
           </Col>
-          <Col span="22">
+          <Col span="22" class="top">
             <FormItem label="备注">
-              <Input v-model="formValidateAdd.remarks" type="textarea" :rows="5" :autosize="{maxRows:5,minRows: 5}" placeholder="请输入备注"></Input>
+              <Input v-model="formValidateAdd.remark" type="textarea" :rows="5" :autosize="{maxRows:5,minRows: 5}" placeholder="请输入备注"></Input>
             </FormItem>
           </Col>
         </Row>
@@ -51,8 +52,6 @@ export default {
     return {
       showAddModal: this.content.addProductModal,
       Title: this.content.addTitle,
-      // 下拉框初始值
-      select_label: '',
       // 表单数据
       formValidateAdd: {
         ID: '',
@@ -61,9 +60,23 @@ export default {
         remark: '',
         status: '',
         update: new Date()
-      }
+      },
+      selList: [
+        {
+          value: '0',
+          label: '禁用'
+        },
+        {
+          value: '1',
+          label: '启用'
+        }
+      ]
     }
   },
+  // mounted () {
+  //   console.log('5555555')
+  //   this.select_label = '启用'
+  // },
   methods: {
     // 确定回调
     ok () {
@@ -90,15 +103,15 @@ export default {
           this.formValidateAdd.name = this.content.name
           this.formValidateAdd.pic = this.content.pic
           this.formValidateAdd.remark = this.content.remark
-          this.formValidateAdd.status = statusLabel
-          // console.log(statusLabel)
-          if (statusLabel === 1) {
-            this.select_label = '禁用'
-          } else {
-            this.select_label = '启用'
-          }
-          console.log(this.select_label)
+          // 需要将status转换为字符串才可以给select赋值成功
+          this.formValidateAdd.status = statusLabel.toString()
           this.formValidateAdd.update = this.content.update
+        } else {
+          this.formValidateAdd.ID = ''
+          this.formValidateAdd.name = ''
+          this.formValidateAdd.pic = ''
+          this.formValidateAdd.remark = ''
+          this.formValidateAdd.status = ''
         }
       },
       deep: true
@@ -108,17 +121,20 @@ export default {
 </script>
 
 <style lang="less">
-.form {
+.top {
   margin-top:15px;
 }
 .ivu-form .ivu-form-item-label {
   text-align: left;
 }
-.col_box_right{
+.col-box-right{
   margin-right: 0px;
 }
-.col_box_left{
+.col-box-left{
   margin-left: 5px;
+}
+.img-left{
+  margin-left: 40px;
 }
 .ivu-form-item-required .ivu-form-item-label:before{
   display: none;
