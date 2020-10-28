@@ -21,8 +21,8 @@
         </Col>
       </Row>
     </Form>
-    <Button type="primary" style="margin-bottom: 5px;" @click="showModel()">添加</Button>
-    <addProductModel :addTitle='addTitle' :showModal='addProductModal' @updateModelStatus='updateModelStatus'></addProductModel>
+    <Button type="primary" style="margin-bottom: 5px;" @click="showModel(1)">添加</Button>
+    <addProductModel :content='content' :tableData1='tableData1' @updateModelStatus='updateModelStatus'></addProductModel>
     <Table :data="tableData1" :columns="tableColumns1" stripe></Table>
     <div :style="{ margin: '10px', overflow: 'hidden', display: isShow }">
       <div style="float: right">
@@ -44,8 +44,19 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
-      addProductModal: false,
-      addTitle: '',
+      // 父组件传值给子组件的对象
+      content: {
+        addProductModal: false, // 是否显示modal框
+        addTitle: '', // modal框标题
+        isEdit: 1,
+        // 编辑时modal框中要赋值的当前选中列的值
+        ID: '',
+        name: '',
+        pic: '',
+        remark: '',
+        status: '',
+        update: new Date()
+      },
       formValidate: {
         name: '',
         status: ''
@@ -114,7 +125,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.show(params.index)
+                      this.showModel(2, params.index)
                     }
                   }
                 },
@@ -166,7 +177,7 @@ export default {
       for (let i = 0; i < 32; i++) {
         dataArr.push({
           ID: Math.floor(Math.random() * 100000 + 1),
-          name: Math.floor(Math.random() * 3 + 1),
+          name: Math.floor(Math.random() * 100000 + 1),
           pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
           remark: Math.floor(Math.random() * 3 + 1),
           status: Math.floor(Math.random() * 2 + 1),
@@ -209,15 +220,30 @@ export default {
         this.changePage(1)
       }
     },
-    // 添加
-    showModel () {
-      this.addProductModal = true
+    // 添加 / 编辑
+    showModel (isEdit, index) {
+      this.content.addProductModal = true
       // console.log(this.addProductModal)
-      this.addTitle = '新增产品类型'
+      // 判断为新增还是编辑
+      if (isEdit === 1) {
+        this.content.addTitle = '新增产品类型'
+        this.content.isEdit = isEdit
+        // console.log(this.isEdit)
+      } else {
+        this.content.addTitle = '编辑产品类型'
+        this.content.isEdit = isEdit
+        this.content.ID = this.tableData1[index].ID
+        this.content.name = this.tableData1[index].name
+        this.content.pic = this.tableData1[index].pic
+        this.content.remark = this.tableData1[index].remark
+        this.content.status = this.tableData1[index].status
+        this.content.update = this.tableData1[index].update
+      }
       // console.log(this.addTitle)
     },
+    // 添加modal给父组件传值false,关闭modal
     updateModelStatus (newVal) {
-      this.addProductModal = newVal
+      this.content.addProductModal = newVal
       // console.log(this.addProductModal)
     },
     formatDate (date) {
@@ -241,17 +267,17 @@ export default {
       // 储存当前页
       this.pageCurrent = index
     },
-    show (index) { // 编辑
-      this.$Modal.info({
-        title: 'User Info',
-        content: `ID：${this.tableData1[index].ID}<br>
-                  name：${this.tableData1[index].name}<br>
-                  pic：<img class="edit_pic" src=${this.tableData1[index].pic}><br>
-                  remark：${this.tableData1[index].remark}<br>
-                  status：${this.tableData1[index].status}<br>
-                  update：${this.formatDate(this.tableData1[index].update)}`
-      })
-    },
+    // show (index) { // 编辑
+    //   this.$Modal.info({
+    //     title: 'User Info',
+    //     content: `ID：${this.tableData1[index].ID}<br>
+    //               name：${this.tableData1[index].name}<br>
+    //               pic：<img class="edit_pic" src=${this.tableData1[index].pic}><br>
+    //               remark：${this.tableData1[index].remark}<br>
+    //               status：${this.tableData1[index].status}<br>
+    //               update：${this.formatDate(this.tableData1[index].update)}`
+    //   })
+    // },
     remove (index) { // 删除
       this.$Modal.confirm({
         title: '删除提示',
