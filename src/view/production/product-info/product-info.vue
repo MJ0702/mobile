@@ -10,8 +10,7 @@
         <Col span="6" class="col_box_right">
           <FormItem label="状态" prop="status">
             <Select v-model="formValidate.status" placeholder="请选择状态">
-              <Option value="0">禁用</Option>
-              <Option value="1">启用</Option>
+              <Option v-for="item in selList" :key="item.value" :value="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
         </Col>
@@ -21,7 +20,8 @@
         </Col>
       </Row>
     </Form>
-    <Button type="primary" style="margin-bottom: 5px;" @click="handleAdd">添加</Button>
+    <Button type="primary" style="margin-bottom: 5px;" @click="showModel(1)">添加</Button>
+    <addProductModel :content='content' :tableData1='tableData1' @updateModelStatus='updateModelStatus'></addProductModel>
     <Table :data="tableData1" :columns="tableColumns1" stripe></Table>
     <div :style="{ margin: '10px', overflow: 'hidden', display: isShow }">
       <div style="float: right">
@@ -31,7 +31,11 @@
   </div>
 </template>
 <script>
+import addProductModel from '../../modal/productInfo-modal.vue'
 export default {
+  components: {
+    addProductModel
+  },
   data () {
     return {
       isShow: 'block',
@@ -39,6 +43,32 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      // 父组件传值给子组件的对象
+      content: {
+        addProductModal: false, // 是否显示modal框
+        addTitle: '', // modal框标题
+        isEdit: 1,
+        // 编辑时modal框中要赋值的当前选中列的值
+        ID: '',
+        name: '',
+        imgUrl: '',
+        memo: '',
+        proBrandName: '',
+        proTypeName: '',
+        update: new Date()
+      },
+      // 搜索状态栏下拉数据
+      selList: [
+        {
+          value: '0',
+          label: '禁用'
+        },
+        {
+          value: '1',
+          label: '启用'
+        }
+      ],
+      // 搜索表单数据
       formValidate: {
         name: '',
         status: ''
@@ -55,15 +85,34 @@ export default {
           key: 'name'
         },
         {
+          title: '类型',
+          key: 'proTypeName',
+          render: (h, params) => {
+            const row = params.row
+            console.log(row)
+            const text = row.proTypeName === 1 ? '手机' : '电脑'
+            return h('div', {}, text)
+          }
+        },
+        {
+          title: '品牌',
+          key: 'proBrandName',
+          render: (h, params) => {
+            const row = params.row
+            const text = row.proBrandName === 1 ? '苹果' : '华为'
+            return h('div', {}, text)
+          }
+        },
+        {
           title: '图片',
-          key: 'pic',
+          key: 'imgUrl',
           render: (h, params) => {
             return h('div', [
               h(
                 'img',
                 {
                   attrs: {
-                    src: params.row.pic
+                    src: params.row.imgUrl
                   },
                   style: {
                     width: '40px',
@@ -77,14 +126,14 @@ export default {
         },
         {
           title: '备注',
-          key: 'remark'
+          key: 'memo'
         },
         {
           title: '状态',
           key: 'status',
           render: (h, params) => {
             const row = params.row
-            const text = row.status === 1 ? '禁用' : '启用'
+            const text = row.status === 1 ? '启用' : '禁用'
             return h('Tag', {}, text)
           }
         },
@@ -107,7 +156,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.show(params.index)
+                      this.showModel(2, params.index)
                     }
                   }
                 },
@@ -159,10 +208,13 @@ export default {
       for (let i = 0; i < 32; i++) {
         dataArr.push({
           ID: Math.floor(Math.random() * 100000 + 1),
-          name: Math.floor(Math.random() * 3 + 1),
-          pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-          remark: Math.floor(Math.random() * 3 + 1),
-          status: Math.floor(Math.random() * 2 + 1),
+          name: Math.floor(Math.random() * 100000 + 1),
+          typeId: '1317',
+          proTypeName: Math.floor(Math.random() * 2),
+          proBrandName: Math.floor(Math.random() * 2),
+          imgUrl: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
+          memo: Math.floor(Math.random() * 100000 + 1),
+          status: Math.floor(Math.random() * 2),
           update: new Date()
         })
       }
@@ -174,16 +226,21 @@ export default {
       let searchArr = []
       searchArr.push({
         ID: Math.floor(Math.random() * 100000 + 1),
-        name: 666666,
-        pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-        remark: 777777,
-        status: Math.floor(Math.random() * 2 + 1),
+        name: Math.floor(Math.random() * 100000 + 1),
+        typeId: '1317',
+        proTypeName: Math.floor(Math.random() * 2),
+        proBrandName: Math.floor(Math.random() * 2),
+        imgUrl: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
+        memo: Math.floor(Math.random() * 100000 + 1),
+        status: Math.floor(Math.random() * 2),
         update: new Date()
       })
       return searchArr
     },
     // 搜索
     handleSubmit () {
+      // console.log('name' + this.formValidate.name)
+      // console.log('status' + this.formValidate.status)
       if (this.formValidate.name === '' && this.formValidate.status === '') {
         this.$Message.error('请输入名称或请选择状态')
       } else {
@@ -202,18 +259,31 @@ export default {
         this.changePage(1)
       }
     },
-    // 添加
-    handleAdd () {
-      this.tableData1.unshift({
-        ID: 99999999999,
-        name: 888888888888,
-        pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-        remark: 3333333333333,
-        status: Math.floor(Math.random() * 2 + 1),
-        update: new Date()
-      })
-      // this.changePage(1)
-      this.isShow = 'block'
+    // 添加 / 编辑
+    showModel (isEdit, index) {
+      this.content.addProductModal = true
+      // console.log(this.addProductModal)
+      // 判断为新增还是编辑
+      if (isEdit === 1) {
+        this.content.addTitle = '新增产品类型'
+        this.content.isEdit = isEdit
+        // console.log(this.isEdit)
+      } else {
+        this.content.addTitle = '编辑产品类型'
+        this.content.isEdit = isEdit
+        this.content.ID = this.tableData1[index].ID
+        this.content.name = this.tableData1[index].name
+        this.content.imgUrl = this.tableData1[index].imgUrl
+        this.content.memo = this.tableData1[index].memo
+        this.content.proTypeName = this.tableData1[index].proTypeName
+        this.content.proBrandName = this.tableData1[index].proBrandName
+        this.content.update = this.tableData1[index].update
+        this.content.typeId = this.tableData1[index].typeId
+      }
+    },
+    // 添加modal给父组件传值false,关闭modal
+    updateModelStatus (newVal) {
+      this.content.addProductModal = newVal
     },
     formatDate (date) {
       // 格式化时间
@@ -235,17 +305,6 @@ export default {
       this.tableData1 = tableArr.slice(_start, _end)
       // 储存当前页
       this.pageCurrent = index
-    },
-    show (index) { // 编辑
-      this.$Modal.info({
-        title: 'User Info',
-        content: `ID：${this.tableData1[index].ID}<br>
-                  name：${this.tableData1[index].name}<br>
-                  pic：<img class="edit_pic" src=${this.tableData1[index].pic}><br>
-                  remark：${this.tableData1[index].remark}<br>
-                  status：${this.tableData1[index].status}<br>
-                  update：${this.formatDate(this.tableData1[index].update)}`
-      })
     },
     remove (index) { // 删除
       this.$Modal.confirm({

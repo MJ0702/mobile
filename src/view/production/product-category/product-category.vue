@@ -31,7 +31,7 @@
   </div>
 </template>
 <script>
-import addProductModel from '../product-add.vue'
+import addProductModel from '../../modal/productType-modal.vue'
 export default {
   components: {
     addProductModel
@@ -206,7 +206,7 @@ export default {
         name: 666666,
         pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
         remark: 777777,
-        status: Math.floor(Math.random() * 2 + 1),
+        status: Math.floor(Math.random() * 2),
         update: new Date()
       })
       return searchArr
