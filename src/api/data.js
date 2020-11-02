@@ -49,3 +49,54 @@ export const getTreeSelectData = () => {
     method: 'get'
   })
 }
+
+// 获取表格数据
+export const getTableColumnData = ({ page, limit }) => {
+  const data = {
+    page,
+    limit
+  }
+  return axios.request({
+    url: '/productType/queryList',
+    // data,
+    params: {
+      page: data.page,
+      limit: data.limit
+    },
+    method: 'post'
+  })
+}
+// 搜索获取数据
+export const getTableSearchData = ({ page, limit, name, state }) => {
+  const data = {
+    page,
+    limit,
+    name,
+    state
+  }
+  return axios.request({
+    url: '/productType/queryList',
+    // data,
+    params: {
+      page: data.page,
+      limit: data.limit,
+      name: data.name,
+      state: data.state
+    },
+    method: 'post'
+  })
+}
+// 删除数据
+export const getTableDelData = ({ id }) => {
+  const data = {
+    id
+  }
+  return axios.request({
+    url: '/productType/delete',
+    // data,
+    params: {
+      id: data.id
+    },
+    method: 'post'
+  })
+}

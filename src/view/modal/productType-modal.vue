@@ -64,11 +64,11 @@ export default {
       selList: [
         {
           value: '0',
-          label: '禁用'
+          label: '启用'
         },
         {
           value: '1',
-          label: '启用'
+          label: '禁用'
         }
       ]
     }

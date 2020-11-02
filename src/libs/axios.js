@@ -33,6 +33,7 @@ class HttpRequest {
     }
   }
   interceptors (instance, url) {
+    // console.log(url)
     // 请求拦截
     instance.interceptors.request.use(config => {
       // 添加全局的loading...

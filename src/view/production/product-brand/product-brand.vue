@@ -270,6 +270,7 @@ export default {
       // 需要显示结束数据的index
       let _end = index * this.pageSize
       let tableArr = this.mockTableData1()
+      console.log(tableArr)
       // 截取需要显示的数据
       this.dataCount = tableArr.length
       this.tableData1 = tableArr.slice(_start, _end)
