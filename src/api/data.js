@@ -49,15 +49,14 @@ export const getTreeSelectData = () => {
     method: 'get'
   })
 }
-
 // 获取表格数据
-export const getTableColumnData = ({ page, limit }) => {
+export const getCommonData = ({ page, limit, url }) => {
   const data = {
     page,
     limit
   }
   return axios.request({
-    url: '/productType/queryList',
+    url: url,
     // data,
     params: {
       page: data.page,
@@ -67,7 +66,7 @@ export const getTableColumnData = ({ page, limit }) => {
   })
 }
 // 搜索获取数据
-export const getTableSearchData = ({ page, limit, name, state }) => {
+export const getCommonSearchData = ({ page, limit, name, state, url }) => {
   const data = {
     page,
     limit,
@@ -75,7 +74,7 @@ export const getTableSearchData = ({ page, limit, name, state }) => {
     state
   }
   return axios.request({
-    url: '/productType/queryList',
+    url: url,
     // data,
     params: {
       page: data.page,
@@ -86,17 +85,79 @@ export const getTableSearchData = ({ page, limit, name, state }) => {
     method: 'post'
   })
 }
+// 添加 / 编辑数据
+export const getCommonisAddData = ({ id, memo, name, imgUrl, state, url }) => {
+  const data = {
+    id,
+    memo,
+    name,
+    imgUrl,
+    state
+  }
+  return axios.request({
+    url: url,
+    // data,
+    params: {
+      id: data.id,
+      memo: data.memo,
+      name: data.name,
+      imgUrl: data.imgUrl,
+      state: data.state
+    },
+    method: 'post'
+  })
+}
 // 删除数据
-export const getTableDelData = ({ id }) => {
+export const getCommonDelData = ({ id, url }) => {
   const data = {
     id
   }
   return axios.request({
-    url: '/productType/delete',
+    url: url,
     // data,
     params: {
       id: data.id
     },
     method: 'post'
+  })
+}
+// 产品信息 添加 / 编辑数据
+export const getProductisAddData = ({ id, proTypeId, proBrandId, memo, name, imgUrl, state, url }) => {
+  const data = {
+    id,
+    proTypeId,
+    proBrandId,
+    memo,
+    name,
+    imgUrl,
+    state
+  }
+  return axios.request({
+    url: url,
+    // data,
+    params: {
+      id: data.id,
+      proTypeId: data.proTypeId,
+      proBrandId: data.proBrandId,
+      memo: data.memo,
+      name: data.name,
+      imgUrl: data.imgUrl,
+      state: data.state
+    },
+    method: 'post'
+  })
+}
+// 获取类别
+export const getProductTypeData = () => {
+  return axios.request({
+    url: '/productType/queryList',
+    method: 'get'
+  })
+}
+// 获取品牌
+export const getproductBrandData = () => {
+  return axios.request({
+    url: '/productBrand/queryList',
+    method: 'get'
   })
 }

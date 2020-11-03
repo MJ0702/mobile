@@ -2,10 +2,10 @@
   <div>
     <Modal
       v-model='showAddModal'
+      :closable='false'
       :title='Title'
       width="680"
-      @on-ok="ok"
-      @on-cancel="cancel"
+      :footer-hide='true'
     >
       <Form ref="formValidateAdd" :model="formValidateAdd" :label-width="40" class="top">
         <Row>
@@ -36,6 +36,12 @@
               <Input v-model="formValidateAdd.remark" type="textarea" :rows="5" :autosize="{maxRows:5,minRows: 5}" placeholder="请输入备注"></Input>
             </FormItem>
           </Col>
+          <Col span="23" class="top">
+            <div class="rt">
+              <Button type="text" @click="modalCancel">取消</Button>
+              <Button type="primary" @click="modalOk">确定</Button>
+            </div>
+          </Col>
         </Row>
       </Form>
     </Modal>
@@ -52,38 +58,41 @@ export default {
     return {
       showAddModal: this.content.addProductModal,
       Title: this.content.addTitle,
+      isAdd: '',
       // 表单数据
       formValidateAdd: {
         ID: '',
         name: '',
         pic: '',
         remark: '',
-        status: '',
-        update: new Date()
+        status: ''
       },
       selList: [
         {
           value: '0',
-          label: '禁用'
+          label: '启用'
         },
         {
           value: '1',
-          label: '启用'
+          label: '禁用'
         }
       ]
     }
   },
-  // mounted () {
-  //   console.log('5555555')
-  //   this.select_label = '启用'
-  // },
   methods: {
     // 确定回调
-    ok () {
-      this.$emit('updateModelStatus', false)
+    modalOk () {
+      if (this.formValidateAdd.name === '') {
+        this.$Message.error('请输入名称')
+      } else if (this.formValidateAdd.status === '') {
+        this.$Message.error('请选择状态')
+      } else {
+        // 判断添加 / 编辑时提交数据给接口(调用父组件添加/编辑方法)
+        this.$parent.getisAddData(this.formValidateAdd)
+      }
     },
     // 取消回调
-    cancel () {
+    modalCancel () {
       this.$emit('updateModelStatus', false)
     }
   },
@@ -94,7 +103,8 @@ export default {
         this.showAddModal = this.content.addProductModal
         this.Title = this.content.addTitle
         // 是否编辑
-        let edit = this.content.isEdit
+        this.isAdd = this.content.isEdit
+        let edit = this.isAdd
         // 状态
         let statusLabel = this.content.status
         // 判断是否是编辑
@@ -138,5 +148,8 @@ export default {
 }
 .ivu-form-item-required .ivu-form-item-label:before{
   display: none;
+}
+.rt {
+  float: right;
 }
 </style>

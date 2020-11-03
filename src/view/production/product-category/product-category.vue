@@ -32,7 +32,7 @@
 </template>
 <script>
 import addProductModel from '../../modal/productType-modal.vue'
-import { getTableColumnData, getTableSearchData, getTableDelData } from '@/api/data'
+import { getCommonData, getCommonSearchData, getCommonisAddData, getCommonDelData } from '@/api/data'
 export default {
   components: {
     addProductModel
@@ -44,6 +44,9 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      url: '/productType/queryList',
+      delurl: '/productType/delete',
+      isAdd: '',
       // 删除所用ID
       delId: '',
       // 父组件传值给子组件的对象
@@ -189,17 +192,36 @@ export default {
   },
   methods: {
     getTableData () {
-      // 请求接口返回表格数据
-      getTableColumnData({ page: this.pageCurrent, limit: this.pageSize }).then(this.getInfoSucc)
+    // 请求接口返回表格数据
+      getCommonData({ page: this.pageCurrent, limit: this.pageSize, url: this.url }).then(this.getInfoSucc)
     },
     // 请求接口返回搜索的表格数据
     getSearchData () {
-      getTableSearchData({ page: this.pageCurrent, limit: this.pageSize, name: this.formValidate.name, state: this.formValidate.status }).then(this.getInfoSucc)
+      getCommonSearchData({ page: 1, limit: this.pageSize, name: this.formValidate.name, state: this.formValidate.status, url: this.url }).then(this.getInfoSucc)
     },
-    // 添加并返回表格数据
+    // 添加 / 编辑 并返回表格数据
+    getisAddData (data) {
+      getCommonisAddData({ id: data.id, memo: data.memo, name: data.name, imgUrl: data.imgUrl, state: data.state, url: data.url }).then(res => {
+        if (res.status === 200) {
+          this.content.addProductModal = false
+          if (this.isAdd === 1) {
+            this.$Message.success('添加成功!')
+          } else {
+            this.$Message.success('编辑成功!')
+          }
+          this.changePage(1)
+        } else {
+          if (this.isAdd === 1) {
+            this.$Message.error('添加失败!')
+          } else {
+            this.$Message.error('编辑失败!')
+          }
+        }
+      })
+    },
     // 删除并返回表格数据
     getDelData (data) {
-      getTableDelData({ id: data }).then(res => {
+      getCommonDelData({ id: data, url: this.delurl }).then(res => {
         if (res.status === 200) {
           this.$Message.success('删除成功!')
           this.changePage(1)
@@ -253,8 +275,8 @@ export default {
     // 添加 / 编辑
     showModel (isEdit, index) {
       this.content.addProductModal = true
-      // console.log(this.addProductModal)
       // 判断为新增还是编辑
+      this.isAdd = isEdit
       if (isEdit === 1) {
         this.content.addTitle = '新增产品类型'
         this.content.isEdit = isEdit
@@ -278,7 +300,6 @@ export default {
         okText: '确定',
         cancelText: '取消',
         onOk: () => {
-          // console.log(this.delId)
           this.getDelData(this.delId)
         }
       })
@@ -292,15 +313,6 @@ export default {
       // console.log(currentRow.ID)
       this.delId = currentRow.ID
     },
-    formatDate (date) {
-      // 格式化时间
-      const y = date.getFullYear()
-      let m = date.getMonth() + 1
-      m = m < 10 ? '0' + m : m
-      let d = date.getDate()
-      d = d < 10 ? '0' + d : d
-      return y + '-' + m + '-' + d
-    },
     changePage (index) { // 分页
       this.pageCurrent = index
       // 判断如果是在搜索条件下还是无搜索条件下切换页码
@@ -309,6 +321,16 @@ export default {
       } else {
         this.getTableData()
       }
+    },
+    // 格式化时间
+    formatDate (date) {
+      // 格式化时间
+      const y = date.getFullYear()
+      let m = date.getMonth() + 1
+      m = m < 10 ? '0' + m : m
+      let d = date.getDate()
+      d = d < 10 ? '0' + d : d
+      return y + '-' + m + '-' + d
     }
   },
   // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页

@@ -2,10 +2,10 @@
   <div>
     <Modal
       v-model='showAddModal'
+      :closable='false'
       :title='Title'
       width="680"
-      @on-ok="ok"
-      @on-cancel="cancel"
+      :footer-hide='true'
     >
       <Form ref="formValidateAdd" :model="formValidateAdd" :label-width="40" class="top">
         <Row>
@@ -27,7 +27,13 @@
             </FormItem>
           </Col>
           <Col span="22" class="img-left">
-          <Upload action="//jsonplaceholder.typicode.com/posts/">
+          <Upload
+            action="/api/productBrand/addImg"
+            :show-upload-list="false"
+            :on-success="handleUploadicon"
+            :on-error="handleUpError"
+            :format="['jpg','jpeg','png', 'gif']"
+            :on-format-error="handleFormatError">
             <Button icon="ios-cloud-upload-outline" type="primary">上传</Button>
           </Upload>
           </Col>
@@ -35,6 +41,12 @@
             <FormItem label="备注">
               <Input v-model="formValidateAdd.remark" type="textarea" :rows="5" :autosize="{maxRows:5,minRows: 5}" placeholder="请输入备注"></Input>
             </FormItem>
+          </Col>
+          <Col span="23" class="top">
+            <div class="rt">
+              <Button type="text" @click="modalCancel">取消</Button>
+              <Button type="primary" @click="modalOk">确定</Button>
+            </div>
           </Col>
         </Row>
       </Form>
@@ -52,38 +64,66 @@ export default {
     return {
       showAddModal: this.content.addProductModal,
       Title: this.content.addTitle,
+      isAdd: '',
       // 表单数据
       formValidateAdd: {
         ID: '',
         name: '',
         pic: '',
         remark: '',
-        status: '',
-        update: new Date()
+        status: ''
       },
       selList: [
         {
           value: '0',
-          label: '禁用'
+          label: '启用'
         },
         {
           value: '1',
-          label: '启用'
+          label: '禁用'
         }
       ]
     }
   },
-  // mounted () {
-  //   console.log('5555555')
-  //   this.select_label = '启用'
-  // },
   methods: {
+    // 文件上传成功时的钩子，返回字段为 response, file, fileList
+    handleUploadicon (response) {
+      this.formValidateAdd.pic = response.imgUrl
+      this.$Message.success('图片上传成功')
+    },
+    handleUpError () {
+      this.$Message.error('图片上传失败')
+    },
+    // 文件格式验证失败时的钩子，返回字段为 file, fileList
+    handleFormatError (file) {
+      this.$Message.info('图片格式不正确,请上传正确的图片格式')
+    },
     // 确定回调
-    ok () {
-      this.$emit('updateModelStatus', false)
+    modalOk () {
+      if (this.formValidateAdd.name === '') {
+        this.$Message.error('请输入名称')
+      } else if (this.formValidateAdd.status === '') {
+        this.$Message.error('请选择状态')
+      } else {
+        let data = {}
+        data.id = this.formValidateAdd.ID
+        data.memo = this.formValidateAdd.remark
+        data.name = this.formValidateAdd.name
+        data.imgUrl = this.formValidateAdd.pic
+        data.state = this.formValidateAdd.status
+        // 添加
+        if (this.isAdd === 1) {
+          data.url = '/productBrand/add'
+        // 编辑
+        } else {
+          data.url = '/productBrand/update'
+        }
+        // 判断添加 / 编辑时提交数据给接口(调用父组件添加/编辑方法)
+        this.$parent.getisAddData(data)
+      }
     },
     // 取消回调
-    cancel () {
+    modalCancel () {
       this.$emit('updateModelStatus', false)
     }
   },
@@ -94,7 +134,8 @@ export default {
         this.showAddModal = this.content.addProductModal
         this.Title = this.content.addTitle
         // 是否编辑
-        let edit = this.content.isEdit
+        this.isAdd = this.content.isEdit
+        let edit = this.isAdd
         // 状态
         let statusLabel = this.content.status
         // 判断是否是编辑
@@ -138,5 +179,8 @@ export default {
 }
 .ivu-form-item-required .ivu-form-item-label:before{
   display: none;
+}
+.rt {
+  float: right;
 }
 </style>
