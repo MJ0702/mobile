@@ -3,6 +3,7 @@
     <Modal
       v-model='showAddModal'
       :closable='false'
+      :mask-closable='false'
       :title='Title'
       width="680"
       :footer-hide='true'
@@ -27,7 +28,13 @@
             </FormItem>
           </Col>
           <Col span="22" class="img-left">
-          <Upload action="//jsonplaceholder.typicode.com/posts/">
+          <Upload
+            action="/api/productType/addImg"
+            :show-upload-list="false"
+            :on-success="handleUploadicon"
+            :on-error="handleUpError"
+            :format="['jpg','jpeg','png', 'gif']"
+            :on-format-error="handleFormatError">
             <Button icon="ios-cloud-upload-outline" type="primary">上传</Button>
           </Upload>
           </Col>
@@ -80,6 +87,18 @@ export default {
     }
   },
   methods: {
+    // 文件上传成功时的钩子，返回字段为 response, file, fileList
+    handleUploadicon (response) {
+      this.formValidateAdd.pic = response.imgUrl
+      this.$Message.success('图片上传成功')
+    },
+    handleUpError () {
+      this.$Message.error('图片上传失败')
+    },
+    // 文件格式验证失败时的钩子，返回字段为 file, fileList
+    handleFormatError (file) {
+      this.$Message.info('图片格式不正确,请上传正确的图片格式')
+    },
     // 确定回调
     modalOk () {
       if (this.formValidateAdd.name === '') {
@@ -87,8 +106,21 @@ export default {
       } else if (this.formValidateAdd.status === '') {
         this.$Message.error('请选择状态')
       } else {
+        let data = {}
+        data.id = this.formValidateAdd.ID
+        data.memo = this.formValidateAdd.remark
+        data.name = this.formValidateAdd.name
+        data.imgUrl = this.formValidateAdd.pic
+        data.state = this.formValidateAdd.status
+        // 添加
+        if (this.isAdd === 1) {
+          data.url = '/scrollImg/add'
+        // 编辑
+        } else {
+          data.url = '/scrollImg/update'
+        }
         // 判断添加 / 编辑时提交数据给接口(调用父组件添加/编辑方法)
-        this.$parent.getisAddData(this.formValidateAdd)
+        this.$parent.getisAddData(data)
       }
     },
     // 取消回调

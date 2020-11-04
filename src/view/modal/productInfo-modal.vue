@@ -3,6 +3,7 @@
     <Modal
       v-model='showAddModal'
       :closable='false'
+      :mask-closable='false'
       :title='Title'
       width="680"
       :footer-hide='true'
@@ -89,7 +90,8 @@ export default {
         imgUrl: '',
         memo: '',
         proTypeName: '',
-        proBrandName: ''
+        proBrandName: '',
+        status: ''
       },
       proBrandList: [],
       proTypeList: [],

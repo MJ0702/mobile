@@ -3,17 +3,17 @@
     <Form ref="formValidate" :model="formValidate" :label-width="40">
       <Row>
         <Col span="6" class="col_box_right">
-          <FormItem label="名称" prop="name">
-            <Input v-model="formValidate.name" placeholder="请输入名称"></Input>
+          <FormItem label="名称" prop="addr">
+            <Input v-model="formValidate.addr" placeholder="请输入名称"></Input>
           </FormItem>
         </Col>
-        <Col span="6" class="col_box_right">
+        <!-- <Col span="6" class="col_box_right">
           <FormItem label="状态" prop="status">
             <Select v-model="formValidate.status" placeholder="请选择状态">
               <Option v-for="item in selList" :key="item.value" :value="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
-        </Col>
+        </Col> -->
         <Col span="6">
           <Button class="col_box_right" type="primary" shape="circle" icon="ios-search" @click="handleSubmit()">搜索</Button>
           <Button type="warning" shape="circle" icon="md-refresh" @click="handleReset">重置</Button>
@@ -22,7 +22,7 @@
     </Form>
     <Button type="primary" style="margin-bottom: 5px;" @click="showModel(1)">添加</Button>
     <addProductModel :content='content' :tableData1='tableData1' @updateModelStatus='updateModelStatus'></addProductModel>
-    <Table :data="tableData1" :columns="tableColumns1" stripe></Table>
+    <Table highlight-row ref="currentRowTable" :data="tableData1" :columns="tableColumns1" @on-current-change="handleRowChange" stripe></Table>
     <div :style="{ margin: '10px', overflow: 'hidden', display: isShow }">
       <div style="float: right">
         <Page :total="dataCount" :page-size='pageSize' :current="pageCurrent" @on-change="changePage"></Page>
@@ -32,6 +32,7 @@
 </template>
 <script>
 import addProductModel from '../modal/companyAddrInfo-modal.vue'
+import { getCommonData, getCompanyAddrSearchData, getCompanyAddrisAddData, getCommonDelData } from '@/api/data'
 export default {
   components: {
     addProductModel
@@ -43,6 +44,11 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      url: '/address/queryList',
+      delurl: '/address/delete',
+      isAdd: '',
+      // 删除所用ID
+      delId: '',
       // 父组件传值给子组件的对象
       content: {
         addProductModal: false, // 是否显示modal框
@@ -50,27 +56,28 @@ export default {
         isEdit: 1,
         // 编辑时modal框中要赋值的当前选中列的值
         ID: '',
-        name: '',
-        pic: '',
-        remark: '',
-        status: '',
-        update: new Date()
+        ucId: '',
+        province: '',
+        city: '',
+        addr: '',
+        idType: '',
+        isDefault: '',
+        memo: ''
       },
       // 搜索状态栏下拉数据
       selList: [
         {
           value: '0',
-          label: '禁用'
+          label: '启用'
         },
         {
           value: '1',
-          label: '启用'
+          label: '禁用'
         }
       ],
       // 搜索表单数据
       formValidate: {
-        name: '',
-        status: ''
+        addr: ''
       },
       tableData1: [],
       // 表格数据列
@@ -80,42 +87,42 @@ export default {
           key: 'ID'
         },
         {
-          title: '名称',
-          key: 'name'
+          title: 'ucId',
+          key: 'ucId'
         },
         {
-          title: '图片',
-          key: 'pic',
+          title: '类型',
+          key: 'idType',
           render: (h, params) => {
-            return h('div', [
-              h(
-                'img',
-                {
-                  attrs: {
-                    src: params.row.pic
-                  },
-                  style: {
-                    width: '40px',
-                    height: '40px',
-                    'vertical-align': 'middle'
-                  }
-                }
-              )
-            ])
+            const row = params.row
+            const text = row.idType === '1' ? '公司' : '散客'
+            return h('Tag', {}, text)
           }
+        },
+        {
+          title: '是否默认',
+          key: 'isDefault',
+          render: (h, params) => {
+            const row = params.row
+            const text = row.isDefault === '0' ? '默认' : '不默认'
+            return h('Tag', {}, text)
+          }
+        },
+        {
+          title: '省份',
+          key: 'province'
+        },
+        {
+          title: '城市',
+          key: 'city'
+        },
+        {
+          title: '地址信息',
+          key: 'addr'
         },
         {
           title: '备注',
-          key: 'remark'
-        },
-        {
-          title: '状态',
-          key: 'status',
-          render: (h, params) => {
-            const row = params.row
-            const text = row.status === 1 ? '启用' : '禁用'
-            return h('Tag', {}, text)
-          }
+          key: 'memo'
         },
         {
           title: '操作',
@@ -162,80 +169,102 @@ export default {
         },
         {
           title: '日期',
-          key: 'update',
+          key: 'addTime',
           render: (h, params) => {
             return h(
               'div',
-              this.formatDate(this.tableData1[params.index].update)
+              this.tableData1[params.index].addTime
             )
           }
         }
       ]
     }
   },
-  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
-  created: function () {
-    // 获取分页首页的数据
-    this.changePage(this.pageCurrent)
-    if (this.tableData1.length === 0) {
-      this.isShow = 'none'
-    }
-  },
   methods: {
-    mockTableData1 () {
-      // 随机产生每页数据
+    getTableData () {
+    // 请求接口返回表格数据
+      getCommonData({ page: this.pageCurrent, limit: this.pageSize, url: this.url }).then(this.getInfoSucc)
+    },
+    // 请求接口返回搜索的表格数据
+    getSearchData () {
+      getCompanyAddrSearchData({ page: 1, limit: this.pageSize, addr: this.formValidate.addr, isType: '1', url: this.url }).then(this.getInfoSucc)
+    },
+    // 添加 / 编辑 并返回表格数据
+    getisAddData (data) {
+      getCompanyAddrisAddData({ id: data.id, ucId: data.ucId, province: data.province, city: data.city, addr: data.addr, memo: data.memo, isDefault: data.isDefault, idType: data.idType, url: data.url }).then(res => {
+        if (res.status === 200) {
+          this.content.addProductModal = false
+          if (this.isAdd === 1) {
+            this.$Message.success('添加成功!')
+          } else {
+            this.$Message.success('编辑成功!')
+          }
+          this.changePage(1)
+        } else {
+          if (this.isAdd === 1) {
+            this.$Message.error('添加失败!')
+          } else {
+            this.$Message.error('编辑失败!')
+          }
+        }
+      })
+    },
+    // 删除并返回表格数据
+    getDelData (data) {
+      getCommonDelData({ id: data, url: this.delurl }).then(res => {
+        if (res.status === 200) {
+          this.$Message.success('删除成功!')
+          this.changePage(1)
+        } else {
+          this.$Message.error('删除失败!')
+        }
+      })
+    },
+    // 封装回调
+    getInfoSucc (res) {
+      // 加载中
+      this.$Spin.show()
       let dataArr = []
-      for (let i = 0; i < 32; i++) {
+      let _this = this
+      let tbData = res.data.data
+      _this.dataCount = res.data.count
+      // console.log(res.data.data)
+      for (let i = 0; i < tbData.length; i++) {
         dataArr.push({
-          ID: Math.floor(Math.random() * 100000 + 1),
-          name: Math.floor(Math.random() * 100000 + 1),
-          pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-          remark: Math.floor(Math.random() * 1000 + 1),
-          status: Math.floor(Math.random() * 2),
-          update: new Date()
+          ID: tbData[i].id,
+          ucId: tbData[i].ucId,
+          province: tbData[i].province,
+          city: tbData[i].city,
+          addr: tbData[i].addr,
+          idType: tbData[i].idType,
+          memo: tbData[i].memo,
+          isDefault: tbData[i].isDefault,
+          addTime: tbData[i].addTime
         })
       }
-      // console.log(this.dataCount)
-      return dataArr
-    },
-    // 搜索返回结果
-    searchTableData () {
-      let searchArr = []
-      searchArr.push({
-        ID: Math.floor(Math.random() * 100000 + 1),
-        name: 666666,
-        pic: 'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2488980962,457564801&fm=26&gp=0.jpg',
-        remark: 777777,
-        status: Math.floor(Math.random() * 2 + 1),
-        update: new Date()
-      })
-      return searchArr
+      _this.tableData1 = dataArr
+      this.$Spin.hide()
     },
     // 搜索
     handleSubmit () {
-      if (this.formValidate.name === '' && this.formValidate.status === '') {
-        this.$Message.error('请输入名称或请选择状态')
+      if (this.formValidate.addr === '') {
+        this.$Message.error('请输入地址信息')
       } else {
-        this.$Spin.show()
-        setTimeout(() => {
-          this.$Spin.hide()
-        }, 1000)
-        this.tableData1 = this.searchTableData()
+        this.getSearchData()
       }
     },
     // 重置搜索
     handleReset () {
-      if (this.formValidate.name !== '' || this.formValidate.status !== '') {
-        this.formValidate.name = ''
-        this.formValidate.status = ''
-        this.changePage(1)
+      if (this.formValidate.addr !== '') {
+        this.formValidate.addr = ''
+        this.getSearchData()
       }
     },
     // 添加 / 编辑
     showModel (isEdit, index) {
       this.content.addProductModal = true
-      // console.log(this.addProductModal)
       // 判断为新增还是编辑
+      this.isAdd = isEdit
       if (isEdit === 1) {
         this.content.addTitle = '新增产品类型'
         this.content.isEdit = isEdit
@@ -244,50 +273,49 @@ export default {
         this.content.addTitle = '编辑产品类型'
         this.content.isEdit = isEdit
         this.content.ID = this.tableData1[index].ID
-        this.content.name = this.tableData1[index].name
-        this.content.pic = this.tableData1[index].pic
-        this.content.remark = this.tableData1[index].remark
-        this.content.status = this.tableData1[index].status
-        this.content.update = this.tableData1[index].update
+        this.content.ucId = this.tableData1[index].ucId
+        this.content.province = this.tableData1[index].province
+        this.content.city = this.tableData1[index].city
+        this.content.addr = this.tableData1[index].addr
+        this.content.idType = this.tableData1[index].idType
+        this.content.isDefault = this.tableData1[index].isDefault
+        this.content.memo = this.tableData1[index].memo
       }
+    },
+    // 删除
+    remove (index) {
+      this.$Modal.confirm({
+        title: '提示',
+        content: '确定要删除吗?',
+        okText: '确定',
+        cancelText: '取消',
+        onOk: () => {
+          this.getDelData(this.delId)
+        }
+      })
     },
     // 添加modal给父组件传值false,关闭modal
     updateModelStatus (newVal) {
       this.content.addProductModal = newVal
     },
-    formatDate (date) {
-      // 格式化时间
-      const y = date.getFullYear()
-      let m = date.getMonth() + 1
-      m = m < 10 ? '0' + m : m
-      let d = date.getDate()
-      d = d < 10 ? '0' + d : d
-      return y + '-' + m + '-' + d
+    // 点击切换不同行获取当前行
+    handleRowChange (currentRow, oldCurrentRow) {
+      // console.log(currentRow.ID)
+      this.delId = currentRow.ID
     },
     changePage (index) { // 分页
-      // 需要显示开始数据的index,(因为数据是从0开始的，页码是从1开始的，需要-1)
-      let _start = (index - 1) * this.pageSize
-      // 需要显示结束数据的index
-      let _end = index * this.pageSize
-      let tableArr = this.mockTableData1()
-      // 截取需要显示的数据
-      this.dataCount = tableArr.length
-      this.tableData1 = tableArr.slice(_start, _end)
-      // 储存当前页
       this.pageCurrent = index
-    },
-    remove (index) { // 删除
-      this.$Modal.confirm({
-        title: '删除提示',
-        content: '确定要删除吗?',
-        okText: '确定',
-        cancelText: '取消',
-        onOk: () => {
-          this.tableData1.splice(index, 1)
-          this.$Message.success('删除成功!')
-        }
-      })
+      // 判断如果是在搜索条件下还是无搜索条件下切换页码
+      if (this.formValidate.addr !== '') {
+        this.getSearchData()
+      } else {
+        this.getTableData()
+      }
     }
+  },
+  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
+  mounted () {
+    this.changePage(this.pageCurrent)
   }
 }
 </script>

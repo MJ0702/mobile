@@ -3,6 +3,7 @@
     <Modal
       v-model='showAddModal'
       :closable='false'
+      :mask-closable='false'
       :title='Title'
       width="680"
       :footer-hide='true'

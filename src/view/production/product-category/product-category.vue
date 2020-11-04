@@ -321,16 +321,6 @@ export default {
       } else {
         this.getTableData()
       }
-    },
-    // 格式化时间
-    formatDate (date) {
-      // 格式化时间
-      const y = date.getFullYear()
-      let m = date.getMonth() + 1
-      m = m < 10 ? '0' + m : m
-      let d = date.getDate()
-      d = d < 10 ? '0' + d : d
-      return y + '-' + m + '-' + d
     }
   },
   // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页

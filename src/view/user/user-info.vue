@@ -8,8 +8,8 @@
           </FormItem>
         </Col>
         <Col span="6" class="col_box_right">
-          <FormItem label="状态" prop="state">
-            <Select v-model="formValidate.state" placeholder="请选择物流类型">
+          <FormItem label="状态" prop="status">
+            <Select v-model="formValidate.status" placeholder="请选择状态">
               <Option v-for="item in stateList" :key="item.value" :value="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
@@ -29,6 +29,7 @@
   </div>
 </template>
 <script>
+import { getCommonData, getUserSearchData } from '@/api/data'
 export default {
   data () {
     return {
@@ -37,9 +38,10 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      url: '/user/queryList',
       formValidate: {
         mobile: '',
-        state: ''
+        status: ''
       },
       // 搜索物流类型栏下拉数据
       stateList: [
@@ -57,7 +59,18 @@ export default {
       tableColumns1: [
         {
           title: 'ID',
-          key: 'id'
+          key: 'id',
+          render: (h, params) => {
+            return h(
+              'div',
+              {
+                style: {
+                  'min-width': '160px'
+                }
+              },
+              this.tableData1[params.index].id
+            )
+          }
         },
         {
           title: '微信昵称',
@@ -68,7 +81,7 @@ export default {
           key: 'state',
           render: (h, params) => {
             const row = params.row
-            const text = row.state === 1 ? '停用' : '启用'
+            const text = row.state === '0' ? '启用' : '停用'
             return h('div', {}, text)
           }
         },
@@ -107,100 +120,77 @@ export default {
           render: (h, params) => {
             return h(
               'div',
-              this.formatDate(this.tableData1[params.index].addTime)
+              this.tableData1[params.index].addTime
             )
           }
         }
       ]
     }
   },
-  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
-  created: function () {
-    // 获取分页首页的数据
-    this.changePage(this.pageCurrent)
-    if (this.tableData1.length === 0) {
-      this.isShow = 'none'
-    }
-  },
   methods: {
-    mockTableData1 () {
-      // 随机产生每页数据
+    getTableData () {
+    // 请求接口返回表格数据
+      getCommonData({ page: this.pageCurrent, limit: this.pageSize, url: this.url }).then(this.getInfoSucc)
+    },
+    // 请求接口返回搜索的表格数据
+    getSearchData () {
+      getUserSearchData({ page: 1, limit: this.pageSize, mobile: this.formValidate.mobile, state: this.formValidate.status, url: this.url }).then(this.getInfoSucc)
+    },
+    // 封装回调
+    getInfoSucc (res) {
+      // 加载中
+      this.$Spin.show()
       let dataArr = []
-      for (let i = 0; i < 10; i++) {
+      let _this = this
+      let tbData = res.data.data
+      _this.dataCount = res.data.count
+      // console.log(res.data.data)
+      for (let i = 0; i < tbData.length; i++) {
         dataArr.push({
-          id: Math.floor(Math.random() * 100000 + 1),
-          vxName: Math.floor(Math.random() * 100000 + 1),
-          state: Math.floor(Math.random() * 2),
-          name: Math.floor(Math.random() * 1000000 + 1),
-          mobile: Math.floor(Math.random() * 1000000000 + 1),
-          cardId: Math.floor(Math.random() * 100000 + 1),
-          cardType: Math.floor(Math.random() * 2),
-          acctNo: Math.floor(Math.random() * 1000 + 1),
-          memo: Math.floor(Math.random() * 1000 + 1),
-          addTime: new Date()
+          id: tbData[i].id,
+          vxName: tbData[i].vxName,
+          state: tbData[i].state,
+          name: tbData[i].name,
+          mobile: tbData[i].mobile,
+          cardId: tbData[i].cardId,
+          cardType: tbData[i].cardType,
+          acctNo: tbData[i].acctNo,
+          memo: tbData[i].memo,
+          addTime: tbData[i].addTime
         })
       }
-      // console.log(this.dataCount)
-      return dataArr
-    },
-    // 搜索返回结果
-    searchTableData () {
-      let searchArr = []
-      searchArr.push({
-        id: Math.floor(Math.random() * 100000 + 1),
-        vxName: Math.floor(Math.random() * 100000 + 1),
-        state: Math.floor(Math.random() * 2),
-        name: Math.floor(Math.random() * 1000000 + 1),
-        mobile: Math.floor(Math.random() * 1000000000 + 1),
-        cardId: Math.floor(Math.random() * 100000 + 1),
-        cardType: Math.floor(Math.random() * 2),
-        acctNo: Math.floor(Math.random() * 1000 + 1),
-        memo: Math.floor(Math.random() * 1000 + 1),
-        addTime: new Date()
-      })
-      return searchArr
+      _this.tableData1 = dataArr
+      this.$Spin.hide()
     },
     // 搜索
     handleSubmit () {
-      if (this.formValidate.mobile === '' && this.formValidate.state === '') {
-        this.$Message.error('请输入手机号或请选择状态')
+      if (this.formValidate.mobile === '' && this.formValidate.status === '') {
+        this.$Message.error('请选择订单状态或请选择物流类型')
       } else {
-        this.$Spin.show()
-        setTimeout(() => {
-          this.$Spin.hide()
-        }, 1000)
-        this.tableData1 = this.searchTableData()
+        this.getSearchData()
       }
     },
     // 重置搜索
     handleReset () {
-      if (this.formValidate.mobile !== '' || this.formValidate.state !== '') {
+      if (this.formValidate.mobile !== '' || this.formValidate.status !== '') {
         this.formValidate.mobile = ''
-        this.formValidate.state = ''
-        this.changePage(1)
+        this.formValidate.status = ''
+        this.getSearchData()
       }
     },
-    formatDate (date) {
-      // 格式化时间
-      const y = date.getFullYear()
-      let m = date.getMonth() + 1
-      m = m < 10 ? '0' + m : m
-      let d = date.getDate()
-      d = d < 10 ? '0' + d : d
-      return y + '-' + m + '-' + d
-    },
     changePage (index) { // 分页
-      // 需要显示开始数据的index,(因为数据是从0开始的，页码是从1开始的，需要-1)
-      let _start = (index - 1) * this.pageSize
-      // 需要显示结束数据的index
-      let _end = index * this.pageSize
-      let tableArr = this.mockTableData1()
-      // 截取需要显示的数据
-      this.dataCount = tableArr.length
-      this.tableData1 = tableArr.slice(_start, _end)
-      // 储存当前页
       this.pageCurrent = index
+      // 判断如果是在搜索条件下还是无搜索条件下切换页码
+      if (this.formValidate.mobile !== '' || this.formValidate.status !== '') {
+        this.getSearchData()
+      } else {
+        this.getTableData()
+      }
     }
+  },
+  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
+  mounted () {
+    this.changePage(this.pageCurrent)
   }
 }
 </script>

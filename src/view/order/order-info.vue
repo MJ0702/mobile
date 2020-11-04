@@ -31,6 +31,7 @@
   </div>
 </template>
 <script>
+import { getCommonData, getOrdSearchData } from '@/api/data'
 export default {
   data () {
     return {
@@ -39,6 +40,7 @@ export default {
       pageSize: 10, // 每页显示多少条
       dataCount: 0, // 总条数
       pageCurrent: 1, // 当前页
+      url: '/order/queryList',
       formValidate: {
         logType: '',
         status: ''
@@ -109,7 +111,7 @@ export default {
           key: 'logType',
           render: (h, params) => {
             const row = params.row
-            const text = row.logType === 1 ? '上门回收' : '邮寄处理'
+            const text = row.logType === '1' ? '邮寄处理' : '上门回收'
             return h('div', {}, text)
           }
         },
@@ -122,7 +124,7 @@ export default {
           key: 'state',
           render: (h, params) => {
             const row = params.row
-            const text = row.status === 1 ? '处理中' : '未处理'
+            const text = row.status === '1' ? '处理中' : '处理成功'
             return h('div', {}, text)
           }
         },
@@ -132,101 +134,78 @@ export default {
           render: (h, params) => {
             return h(
               'div',
-              this.formatDate(this.tableData1[params.index].addTime)
+              this.tableData1[params.index].addTime
             )
           }
         }
       ]
     }
   },
-  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
-  created: function () {
-    // 获取分页首页的数据
-    this.changePage(this.pageCurrent)
-    if (this.tableData1.length === 0) {
-      this.isShow = 'none'
-    }
-  },
   methods: {
-    mockTableData1 () {
-      // 随机产生每页数据
+    getTableData () {
+    // 请求接口返回表格数据
+      getCommonData({ page: this.pageCurrent, limit: this.pageSize, url: this.url }).then(this.getInfoSucc)
+    },
+    // 请求接口返回搜索的表格数据
+    getSearchData () {
+      getOrdSearchData({ page: 1, limit: this.pageSize, logType: this.formValidate.logType, state: this.formValidate.status, url: this.url }).then(this.getInfoSucc)
+    },
+    // 封装回调
+    getInfoSucc (res) {
+      // 加载中
+      this.$Spin.show()
       let dataArr = []
-      for (let i = 0; i < 10; i++) {
+      let _this = this
+      let tbData = res.data.data
+      _this.dataCount = res.data.count
+      // console.log(res.data.data)
+      for (let i = 0; i < tbData.length; i++) {
         dataArr.push({
-          id: Math.floor(Math.random() * 100000 + 1),
-          userId: Math.floor(Math.random() * 100000 + 1),
-          companyId: Math.floor(Math.random() * 100000 + 1),
-          addrId: Math.floor(Math.random() * 100000 + 1),
-          amout: Math.floor(Math.random() * 2 + 1),
-          price: Math.floor(Math.random() * 100 + 1),
-          addr: Math.floor(Math.random() * 1000 + 1),
-          logType: Math.floor(Math.random() * 2),
-          memo: Math.floor(Math.random() * 100000 + 1),
-          status: Math.floor(Math.random() * 2 + 1),
-          addTime: new Date()
+          id: tbData[i].id,
+          userId: tbData[i].userId,
+          companyId: tbData[i].companyId,
+          addrId: tbData[i].addrId,
+          amout: tbData[i].amout,
+          price: tbData[i].price,
+          addr: tbData[i].addr,
+          logType: tbData[i].logType,
+          memo: tbData[i].memo,
+          status: tbData[i].status,
+          addTime: tbData[i].addTime
         })
       }
-      return dataArr
-    },
-    // 搜索返回结果
-    searchTableData () {
-      let searchArr = []
-      searchArr.push({
-        id: Math.floor(Math.random() * 100000 + 1),
-        userId: Math.floor(Math.random() * 100000 + 1),
-        companyId: Math.floor(Math.random() * 100000 + 1),
-        addrId: Math.floor(Math.random() * 100000 + 1),
-        amout: Math.floor(Math.random() * 2 + 1),
-        price: Math.floor(Math.random() * 100 + 1),
-        addr: Math.floor(Math.random() * 1000 + 1),
-        logType: Math.floor(Math.random() * 2),
-        memo: Math.floor(Math.random() * 100000 + 1),
-        status: Math.floor(Math.random() * 2 + 1),
-        addTime: new Date()
-      })
-      return searchArr
+      _this.tableData1 = dataArr
+      this.$Spin.hide()
     },
     // 搜索
     handleSubmit () {
-      if (this.formValidate.logType === '' && this.formValidate.status === '') {
+      if (this.formValidate.status === '' && this.formValidate.logType === '') {
         this.$Message.error('请选择订单状态或请选择物流类型')
       } else {
-        this.$Spin.show()
-        setTimeout(() => {
-          this.$Spin.hide()
-        }, 1000)
-        this.tableData1 = this.searchTableData()
+        this.getSearchData()
       }
     },
     // 重置搜索
     handleReset () {
-      if (this.formValidate.logType !== '' || this.formValidate.status !== '') {
+      if (this.formValidate.status !== '' || this.formValidate.logType !== '') {
         this.formValidate.logType = ''
         this.formValidate.status = ''
-        this.changePage(1)
+        this.getSearchData()
       }
     },
-    formatDate (date) {
-      // 格式化时间
-      const y = date.getFullYear()
-      let m = date.getMonth() + 1
-      m = m < 10 ? '0' + m : m
-      let d = date.getDate()
-      d = d < 10 ? '0' + d : d
-      return y + '-' + m + '-' + d
-    },
     changePage (index) { // 分页
-      // 需要显示开始数据的index,(因为数据是从0开始的，页码是从1开始的，需要-1)
-      let _start = (index - 1) * this.pageSize
-      // 需要显示结束数据的index
-      let _end = index * this.pageSize
-      let tableArr = this.mockTableData1()
-      // 截取需要显示的数据
-      this.dataCount = tableArr.length
-      this.tableData1 = tableArr.slice(_start, _end)
-      // 储存当前页
       this.pageCurrent = index
+      // 判断如果是在搜索条件下还是无搜索条件下切换页码
+      if (this.formValidate.name !== '' || this.formValidate.status !== '') {
+        this.getSearchData()
+      } else {
+        this.getTableData()
+      }
     }
+  },
+  // 生命周期函数，当创建完后判断是否有数据，无数据隐藏分页
+  mounted () {
+    this.changePage(this.pageCurrent)
   }
 }
 </script>
