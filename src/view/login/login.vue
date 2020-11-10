@@ -27,14 +27,26 @@ export default {
       'handleLogin',
       'getUserInfo'
     ]),
-    handleSubmit ({ userName, password }) {
-      this.handleLogin({ userName, password }).then(res => {
-        this.getUserInfo().then(res => {
-          // console.log(this.$config)
+    // handleSubmit ({ userName, password }) {
+    //   this.handleLogin({ userName, password }).then(res => {
+    //     this.getUserInfo().then(res => {
+    //       // console.log(this.$config)
+    //       this.$router.push({
+    //         name: this.$config.homeName
+    //       })
+    //     })
+    //   })
+    // },
+    handleSubmit ({ name, pwd }) {
+      this.handleLogin({ name, pwd }).then(res => {
+        // console.log(res)
+        if (res.code === 200) {
           this.$router.push({
             name: this.$config.homeName
           })
-        })
+        } else {
+          this.$Message.error(res.msg)
+        }
       })
     }
   }

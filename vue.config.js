@@ -44,7 +44,7 @@ module.exports = {
     open: false,
     proxy: {
       '/api': {
-        target: 'http://jnhs.yame.club',// 服务器地址
+        target: 'http://admin.jnhs.club',// 服务器地址
         changeOrigin: true, // 是否跨域
         pathRewrite: {
           '^/api': ''   // 需要rewrite的,
